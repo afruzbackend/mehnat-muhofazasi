@@ -244,6 +244,12 @@ def parse_topic(t):
         elif mode == "adabiyot" and kind == "p":
             adabiyot.append(clean(txt))
 
+    # bo'lim sarlavhasi docx'da KATTA harfda — kichiklashtirganda qisqartmalar ham buziladi (SHHV -> shhv),
+    # shuning uchun REJA ro'yxatidagi asl yozuv olinadi
+    for i, s in enumerate(sections):
+        if i < len(reja) and reja[i].rstrip(".").lower() == s["title"].lower():
+            s["title"] = reja[i].rstrip(".")
+
     return {
         "type": t["type"],
         "title": t["title"],

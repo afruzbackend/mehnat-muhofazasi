@@ -235,7 +235,7 @@ class SectionsTests(BaseCase):
     """Ma'ruza matni, taqdimot, video, materiallar, texnologiyalar, glossariy, savol-javob."""
 
     def test_seed_fills_glossary_and_qa(self):
-        self.assertGreater(self.course.glossary.count(), 50)
+        self.assertGreater(self.course.glossary.count(), 20)
         qa = QuickQA.objects.filter(topic__course=self.course)
         self.assertGreater(qa.count(), LAST * 4)
         self.assertEqual(qa.values('topic').distinct().count(), LAST)  # har mavzuda bor

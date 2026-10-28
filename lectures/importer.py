@@ -135,9 +135,27 @@ def set_course_images(course):
 
 # ------------------------------------------------------------------ glossariy va tezkor savol-javob
 TERM_P_RX = re.compile(r'^(?:<b>)?([A-ZА-ЯЎҚҒҲ][^<>—:.()«»]{1,48}?)(?:</b>)?\s*(\([^)]{1,50}\))?\s+—\s+(.+)$', re.S)
-TERM_LI_RX = re.compile(r'^<b>([^<>:]{2,40}?):?</b>:?\s*(.+)$', re.S)
+TERM_LI_RX = re.compile(r'^<b>([^<>:]{2,41}?:?)</b>\s*(.+)$', re.S)
 STOP_START = ('shunday', 'bir ', 'oldingi', 'barcha', 'bu ', 'ushbu', 'har ', 'agar', 'masalan', 'endi', 'avval',
               'keyin', 'asosiy qurilmalarni', 'ekrandagi', 'tashqi dunyo')
+
+
+def split_li(item):
+    """«**Atama** — izoh» / «**Talab:** izoh» / «**Qadam.** izoh» -> (atama, izoh, ajratuvchi).
+    Ajratuvchisiz qalin so'z — gap boshi, atama emas."""
+    m = TERM_LI_RX.match(item)
+    if not m:
+        return None
+    term, rest = m.group(1).strip(), m.group(2).strip()
+    if term[-1:] in ':.':
+        sep = term[-1]
+    elif rest[:1] in ':':
+        sep = ':'
+    elif rest[:1] in '—–-':
+        sep = '—'
+    else:
+        return None
+    return term.rstrip(':. '), rest.lstrip(':—–- '), sep
 
 
 def _plain(text):
@@ -166,17 +184,19 @@ def extract_terms(course):
                 items = []
                 if b['t'] == 'p':
                     m = TERM_P_RX.match(b['html'])
-                    if m:
+                    # «Profilaktikaning eng samarali usuli — ...» kabi gap egasi atama emas: 3 so'zgacha
+                    if m and len(m.group(1).split()) <= 3 and not m.group(3).lower().startswith('bu '):
                         term = m.group(1).strip() + (f' {m.group(2)}' if m.group(2) else '')
                         items.append((m.group(1).strip(), term, m.group(3)))
                 elif b['t'] == 'ul':
                     for it in b['items']:
-                        m = TERM_LI_RX.match(it)
-                        if m:
-                            items.append((m.group(1).strip(), m.group(1).strip(), m.group(2)))
+                        li = split_li(it)
+                        if li and li[2] == '—':  # «Talab:» va «Qadam.» bandlari ta'rif emas
+                            items.append((li[0], li[0], li[1]))
                 for key, term, definition in items:
                     definition = _first_sentence(_plain(definition))
-                    if not _term_ok(key) or len(definition) < 20:
+                    # «...:» bilan tugagan ta'rif — davomi ro'yxatda, yolg'iz o'zi ma'nosiz
+                    if not _term_ok(key) or len(definition) < 20 or definition.endswith(':'):
                         continue
                     found.setdefault(key.lower(), (term, definition[:1].upper() + definition[1:], t))
     return list(found.values())
@@ -200,20 +220,25 @@ def _qa_candidates(topic, terms):
     """Mavzu matnidan savol-javob nomzodlari (test savollaridan EMAS — aks holda testni yodlab olishadi)."""
     # 1) glossariy atamalari
     for g in terms:
-        yield f'«{g.term}» nima?', g.definition
+        yield f'«{g.term.strip("«»")}» nima?', g.definition
     for sec in topic.sections.all():
         blocks = sec.blocks
         for i, b in enumerate(blocks):
             # 2) ro'yxatdagi kalit tushunchalar: «**Kalit:** izoh»
             if b['t'] == 'ul':
                 for it in b['items']:
-                    m = TERM_LI_RX.match(it)
-                    if m and len(m.group(1).strip()) > 3:
-                        yield f'«{m.group(1).strip()}» — bu nima?', _first_sentence(_plain(m.group(2)), 20, 260)
+                    li = split_li(it)
+                    if li and len(li[0]) > 3:
+                        q = {'—': '«{}» — bu nima?', ':': '«{}» bo‘yicha qanday talab bor?',
+                             '.': '«{}» qanday bajariladi?'}[li[2]]
+                        yield q.format(li[0].strip('«»')), _first_sentence(_plain(li[1]), 20, 260)
             # 3) sarlavha + undan keyingi xatboshining birinchi gapi
             elif b['t'] == 'h' and i + 1 < len(blocks) and blocks[i + 1]['t'] == 'p':
                 head = b['text'].strip()
-                q = head if head.endswith('?') else f'«{head}» bo‘yicha asosiy fikr nima?'
+                if 'xulosa' in head.lower():
+                    continue
+                q = (head if head.endswith('?') else f'«{head}»: asosiy fikr nima?' if 'bo‘yicha' in head
+                     else f'«{head}» bo‘yicha asosiy fikr nima?')
                 yield q, _first_sentence(_plain(blocks[i + 1]['html']), 40, 300)
 
 
@@ -226,10 +251,14 @@ def qa_from_content(course, topics=None, per_topic=QA_PER_TOPIC):
         if t.qa.exists():
             continue
         test_texts = {q.text.strip().lower() for q in t.tests.all()}
-        seen, order = set(), 0
+        seen, seen_a, order = set(), set(), 0
         for q, a in _qa_candidates(t, t.terms.all()):
             key = q.lower()
             a = (a or '').strip()
+            # bir xil javob ikki xil savol bilan takrorlanmasin («X nima?» va «X — bu nima?»)
+            a_key = re.sub(r'^[^—.]{1,60}—\s*', '', a).lower()[:40]
+            if a_key in seen_a:
+                continue
             # sifatsiz juftliklar: javob belgidan boshlansa («→», «(»), juda qisqa bo'lsa,
             # savol tugmalar birikmasi («Ctrl + Alt») yoki qadam raqami («2-qadam») bo'lsa
             if (key in seen or len(a) < 25 or not a[:1].isalpha() or key in test_texts
@@ -237,6 +266,7 @@ def qa_from_content(course, topics=None, per_topic=QA_PER_TOPIC):
                 continue
             a = a[:1].upper() + a[1:]
             seen.add(key)
+            seen_a.add(a_key)
             order += 1
             new.append(QuickQA(topic=t, order=order, question=q, answer=a))
             if order >= per_topic:
