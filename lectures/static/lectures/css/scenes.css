@@ -356,3 +356,6 @@
 .ring.wave-r { border: 3px solid #E0533F; animation: waveOut 2.4s ease-out infinite; }
 .ring.wave-r.w1 { animation-delay: .8s; } .ring.wave-r.w2 { animation-delay: 1.6s; }
 @keyframes waveOut { 0% { transform: var(--t) scale(.4); opacity: .9; } 100% { transform: var(--t) scale(1.3); opacity: 0; } }
+
+/* telefonda keng sahna (masalan, o't o'chirgich + alanga) sahifani yonga surmasin */
+@media (max-width: 760px) { .scene3d { overflow: clip; } }

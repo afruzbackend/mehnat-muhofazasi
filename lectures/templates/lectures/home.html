@@ -12,7 +12,7 @@
     <div class="hero-photo-shade"></div>
     <div class="hero-text">
       <div class="eyebrow rv" style="{{ 0|delay }}"><span class="dot"></span>{% firstof course.college 'Elektron darslik' %}{% if course.module %} · {{ course.module }}{% endif %}</div>
-      <h1 class="hero-title rv" style="{{ 1|delay }}"><span class="grad">{{ course.title_first }}</span>{% if course.title_rest %}<br>{{ course.title_rest }}{% endif %}</h1>
+      <h1 class="hero-title rv{% if course.title|length > 24 %} long{% endif %}" style="{{ 1|delay }}"><span class="grad">{{ course.title_first }}</span>{% if course.title_rest %}<br>{{ course.title_rest }}{% endif %}</h1>
       <p class="hero-lead rv" style="{{ 2|delay }}">{{ course.subtitle }}</p>
       <div class="cta rv" style="{{ 3|delay }}">
         <a class="btn primary" href="{{ start.0 }}">{% icon 'play' 18 %} {{ start.1 }}</a>
@@ -33,7 +33,7 @@
   <div class="hero">
     <div class="hero-text">
       <div class="eyebrow rv" style="{{ 0|delay }}"><span class="dot"></span>{% firstof course.college 'Elektron darslik' %}{% if course.module %} · {{ course.module }}{% endif %}</div>
-      <h1 class="hero-title rv" style="{{ 1|delay }}"><span class="grad">{{ course.title_first }}</span>{% if course.title_rest %}<br>{{ course.title_rest }}{% endif %}</h1>
+      <h1 class="hero-title rv{% if course.title|length > 24 %} long{% endif %}" style="{{ 1|delay }}"><span class="grad">{{ course.title_first }}</span>{% if course.title_rest %}<br>{{ course.title_rest }}{% endif %}</h1>
       <p class="hero-lead rv" style="{{ 2|delay }}">{{ course.subtitle }}</p>
       <div class="cta rv" style="{{ 3|delay }}">
         <a class="btn primary" href="{{ start.0 }}">{% icon 'play' 18 %} {{ start.1 }}</a>
