@@ -291,6 +291,21 @@ class SectionsTests(BaseCase):
         self.assertTrue(pdf.file.read(5) == b'%PDF-')
         self.assertContains(self.client.get('/d/mehnat-muhofazasi/taqdimotlar/'), 'res-frame')
 
+    def test_auto_materials(self):
+        from .materiallar import make_all
+        teacher = self.course.resources.create(kind='material', title='Ustozning fayli', url='https://ziyonet.uz/uz')
+        links = [('Mehnat kodeksi', 'https://lex.uz/docs/-6257288', 'lex.uz', 14)]
+        n = make_all(self.course, links)
+        self.assertEqual(make_all(self.course, links), n)  # qayta yaratilsa — almashtiriladi, ko'paymaydi
+        self.assertGreaterEqual(n, 10)
+        mats = self.course.resources.filter(kind='material')
+        self.assertEqual(mats.count(), n + 1)
+        self.assertTrue(mats.filter(pk=teacher.pk).exists())  # ustoz qo'shgani saqlanadi
+        handout = mats.get(topic__number=1, file__endswith='.pdf')
+        self.assertEqual(handout.file.read(5), b'%PDF-')
+        self.assertTrue(mats.filter(topic__number=14, url__contains='lex.uz').exists())
+        self.assertContains(self.client.get('/d/mehnat-muhofazasi/materiallar/'), 'tarqatma material')
+
     def test_qa_and_glossary_editing(self):
         self.login()
         t = '/studio/d/mehnat-muhofazasi/mavzu/1/'

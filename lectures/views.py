@@ -7,6 +7,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils.http import url_has_allowed_host_and_scheme
 
+from . import fan
 from .content import grade_for, short_content, slide_count, slide_list, split_item
 from .models import Course, QuickQA, Section, TestQuestion, Topic
 
@@ -216,7 +217,8 @@ def final_test(request, slug):
             return redirect('lectures:final', slug=slug)
     by_id = bank.select_related('topic').in_bulk(ids)
     questions = [by_id[i] for i in ids if i in by_id]
-    ctx = {'_course': course, 'total_bank': bank.count(), 'pick': course.final_size}
+    ctx = {'_course': course, 'total_bank': bank.count(), 'pick': course.final_size,
+           'final_scene': getattr(fan, 'FINAL_SCENE', 'chip') if course.slug == fan.SLUG else 'chip'}
     if request.META.get('HTTP_X_DARSLIK_EXPORT') == '1':
         # eksportda butun savollar bazasi beriladi, 20 tasini brauzer o'zi tanlaydi
         questions = list(bank.select_related('topic'))

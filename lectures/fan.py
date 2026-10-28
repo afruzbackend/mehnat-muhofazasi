@@ -40,6 +40,8 @@ SCENES = {
     18: 'shield', 19: 'safety', 20: 'plug',
 }
 
+FINAL_SCENE = 'safety'   # yakuniy test sahifasidagi 3D ko'rgazma
+
 # mavzu raqami -> [(YouTube video ID, tili)]   tanlov: mavzuga mosligi, o'zbek tilidagilar birinchi
 VIDEOS = {
     1: [('NBWIhU_-ta0', 'uz'), ('TCoW2u_fbGo', 'uz'), ('GuHw_aCoPGo', 'uz')],
@@ -63,3 +65,16 @@ VIDEOS = {
     19: [('eufz_NiU5xQ', 'uz'), ('Nd62DqvTrwA', 'uz'), ('d9pWPcvVPLA', 'uz')],
     20: [('9LYgLaDoVgg', 'uz'), ('zDhivm2Pw1U', 'uz'), ('kUkrgkSFSuE', 'uz')],
 }
+
+# «Materiallar» bo'limidagi rasmiy manbalar (docx dagi adabiyotlar ro'yxatidan; havolalar tekshirilgan)
+# (nomi, havola, izoh, mavzu raqami — None bo'lsa butun darslik uchun)
+MATERIAL_LINKS = [
+    ('O‘zbekiston Respublikasining Mehnat kodeksi', 'https://lex.uz/docs/-6257288',
+     'Rasmiy matn · lex.uz · mehnat muhofazasi, xodim va ish beruvchining huquq va majburiyatlari', 14),
+    ('«Mehnatni muhofaza qilish to‘g‘risida»gi Qonun (O‘RQ-410, 22.09.2016)', 'https://lex.uz/docs/-3031427',
+     'Rasmiy matn · lex.uz', 14),
+    ('«Yong‘in xavfsizligi to‘g‘risida»gi Qonun (O‘RQ-226, 30.09.2009)', 'https://lex.uz/docs/-1521661',
+     'Rasmiy matn · lex.uz', 3),
+    ('ZiyoNET — ta’lim axborot tarmog‘i', 'https://ziyonet.uz/uz',
+     'O‘quv qo‘llanmalar, darsliklar va qo‘shimcha adabiyotlar', None),
+]
